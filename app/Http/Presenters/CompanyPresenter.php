@@ -58,9 +58,12 @@ class CompanyPresenter
             'job_post_url' => $company->job_post_url,
             'linkedin_url' => $company->linkedin_url,
             'phones' => $company->contacts->where('type', ContactType::Phone)->values()->map(fn (Contact $c) => $this->contact($c))->all(),
-            'emails' => collect($this->emails->sort(
-                $company->contacts->where('type', ContactType::Email)->values()->all()
-            ))->map(fn (Contact $c) => $this->contact($c))->all(),
+            'emails' => $company->contacts
+                ->where('type', ContactType::Email)
+                ->sortBy(fn (Contact $c) => [$this->emails->priority($c->value), $c->id])
+                ->values()
+                ->map(fn (Contact $c) => $this->contact($c))
+                ->all(),
         ];
     }
 

@@ -60,6 +60,24 @@ describe('اليوم', function () {
             ->has('banners'));
     });
 
+    test('a company with several emails and phones renders, emails ordered hr > careers > info', function () {
+        $c = Company::factory()->qualified()->create();
+        Contact::factory()->whatsapp()->create(['company_id' => $c->id]);
+        Contact::factory()->mobile()->create(['company_id' => $c->id]);
+        foreach (['info@multi.sa', 'ahmed@multi.sa', 'hr@multi.sa', 'careers@multi.sa'] as $email) {
+            Contact::factory()->create(['company_id' => $c->id, 'value' => $email]);
+        }
+        app(BatchBuilder::class)->build();
+
+        $this->get('/')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->has('batch.items.0.company.phones', 2)
+            ->where('batch.items.0.company.emails', fn ($emails) => collect($emails)->pluck('value')->all()
+                === ['hr@multi.sa', 'careers@multi.sa', 'info@multi.sa', 'ahmed@multi.sa']));
+
+        $this->get(route('companies.show', $c))->assertOk();
+        $this->get('/archive')->assertOk();
+    });
+
     test('empty state and banners when nothing has run yet', function () {
         $this->get('/')->assertInertia(fn (Assert $page) => $page
             ->where('batch', null)
