@@ -1,0 +1,57 @@
+# SearXNG settings — only overrides on top of the defaults.
+# Reference: https://docs.searxng.org/admin/settings/index.html
+
+use_default_settings:
+  engines:
+    # Only these engines are loaded; everything else is dropped.
+    keep_only:
+      - google
+      - bing
+      - duckduckgo
+      - brave
+      - startpage
+
+general:
+  instance_name: "sdd-search"
+  debug: false
+  enable_metrics: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "ar-SA"
+  # JSON is required by the Laravel app (SearxngSource).
+  formats:
+    - html
+    - json
+
+server:
+  # Overridden by the SEARXNG_SECRET env var from docker-compose (.env).
+  secret_key: "overridden-by-SEARXNG_SECRET-env"
+  # The limiter (bot protection) is off: the instance only listens on 127.0.0.1
+  # and the only client is our own app, which already throttles itself.
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  method: "GET"
+
+ui:
+  static_use_hash: true
+
+outgoing:
+  request_timeout: 6.0
+  max_request_timeout: 12.0
+  pool_connections: 50
+  pool_maxsize: 10
+
+engines:
+  - name: google
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: duckduckgo
+    disabled: false
+  - name: brave
+    disabled: false
+  - name: startpage
+    disabled: false

@@ -1,0 +1,36 @@
+# Self-hosted SearXNG for "Saudi Dev Companies Daily".
+#
+# Bound to 127.0.0.1:8888 ONLY — it is never reachable from the internet.
+# Laravel talks to it at SEARXNG_URL=http://127.0.0.1:8888
+#
+# First run:
+#   cd docker/searxng
+#   echo "SEARXNG_SECRET=$(openssl rand -hex 32)" > .env
+#   docker compose up -d
+#   curl -s "http://127.0.0.1:8888/search?q=test&format=json" | head -c 300
+#
+# Update:  docker compose pull && docker compose up -d
+
+services:
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8888:8080"
+    volumes:
+      - ./settings.yml:/etc/searxng/settings.yml:ro
+    environment:
+      - SEARXNG_BASE_URL=http://127.0.0.1:8888/
+      - SEARXNG_SECRET=${SEARXNG_SECRET:?Set SEARXNG_SECRET in docker/searxng/.env}
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"

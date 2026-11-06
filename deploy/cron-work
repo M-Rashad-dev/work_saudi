@@ -1,0 +1,3 @@
+# /etc/cron.d/work — Laravel scheduler (discovery 03:00, batch at the "batch_time" setting)
+# m h dom mon dow user     command
+* * * * * www-data cd /var/www/work && /usr/bin/php8.3 artisan schedule:run >> /dev/null 2>&1
