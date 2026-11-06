@@ -38,8 +38,8 @@ sudo apt install -y php8.3-fpm php8.3-cli php8.3-mysql php8.3-redis php8.3-mbstr
 # Nginx + Redis + Supervisor
 sudo apt install -y nginx redis-server supervisor
 
-# MySQL — فقط لو مش متسطّب (check-server بيقولك). لو landing بيستخدم MariaDB سيبه وخلاص.
-sudo apt install -y mysql-server
+# MySQL — فقط لو مفيش أي قاعدة بيانات (لو landing بيستخدم MariaDB، تسطيب mysql-server هيشيلها!)
+command -v mysql >/dev/null || sudo apt install -y mysql-server
 
 # Composer (لو مش موجود)
 command -v composer || { curl -sS https://getcomposer.org/installer | php8.3 -- --install-dir=/usr/local/bin --filename=composer; }
@@ -58,8 +58,14 @@ sudo ss -tlnp | grep -E ':6379|:3306'     # لازم يظهر 127.0.0.1 مش 0.0
 
 ---
 
-## 2) ربط السيرفر بـ GitHub وتنزيل المشروع
-الـ repo private، فهنعمل **Deploy key** (مفتاح للقراءة فقط لهذا الـ repo):
+## 2) تنزيل المشروع
+الـ repo public:
+```bash
+git clone https://github.com/M-Rashad-dev/work_saudi.git /var/www/work
+cd /var/www/work
+```
+
+**لو حوّلت الـ repo لـ private بعدين** — اعمل **Deploy key** (مفتاح للقراءة فقط لهذا الـ repo):
 ```bash
 ssh-keygen -t ed25519 -C "vps-work-deploy" -f ~/.ssh/work_deploy -N ""
 cat ~/.ssh/work_deploy.pub

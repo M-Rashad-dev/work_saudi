@@ -5,6 +5,7 @@ set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PHP="${PHP:-php8.3}"
+SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"   # root (no sudo needed) or a sudo user
 COMPOSER="$(command -v composer)"
 cd "$APP_DIR"
 
@@ -23,11 +24,11 @@ $PHP artisan optimize:clear
 $PHP artisan optimize
 
 # Writable dirs for PHP-FPM / Horizon (www-data)
-sudo chgrp -R www-data storage bootstrap/cache
-sudo chmod -R ug+rwX storage bootstrap/cache
+$SUDO chgrp -R www-data storage bootstrap/cache
+$SUDO chmod -R ug+rwX storage bootstrap/cache
 
 $PHP artisan horizon:terminate || true   # Supervisor restarts it with the new code
-sudo systemctl reload php8.3-fpm
+$SUDO systemctl reload php8.3-fpm
 
 $PHP artisan up
 echo "✓ Done"
