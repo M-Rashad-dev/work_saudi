@@ -74,12 +74,21 @@ class GeminiDriver extends PromptDriver
         }
 
         if ($response->status() === 429) {
-            $this->cache->put(self::COOLDOWN_KEY, true, now()->addMinutes(15));
+            $this->cache->put(self::COOLDOWN_KEY, 'rate limited / quota exhausted (429)', now()->addMinutes(15));
             throw new LlmRateLimitedException('gemini: rate limited / quota exhausted (429); cooling down 15 min');
         }
 
         if ($response->failed()) {
             $message = (string) ($response->json('error.message') ?? "HTTP {$response->status()}");
+
+            // Permanent problems (bad/revoked key, suspended project, API disabled): stop trying for an hour
+            // instead of failing again on every company.
+            if (in_array($response->status(), [401, 403], true)
+                || ($response->status() === 400 && preg_match('/API key|API_KEY/i', $message))) {
+                $this->cache->put(self::COOLDOWN_KEY, mb_substr($message, 0, 200), now()->addHour());
+                throw new LlmException("gemini: {$message} (paused for 1 hour)");
+            }
+
             throw new LlmException("gemini: {$message}");
         }
 

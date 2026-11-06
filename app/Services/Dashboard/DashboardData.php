@@ -7,6 +7,7 @@ use App\Enums\SearchRunType;
 use App\Models\DailyBatchItem;
 use App\Models\SearchRun;
 use App\Services\Analysis\AnalysisBacklog;
+use App\Services\Analysis\Drivers\GeminiDriver;
 use App\Services\Discovery\SourceState;
 
 /**
@@ -63,6 +64,14 @@ class DashboardData
             $banners[] = [
                 'level' => $pool < 10 ? 'error' : 'warning',
                 'message' => "الشركات المؤهلة المتاحة: {$pool} فقط (الهدف {$target}). البحث سيوسّع المدن والجمل تلقائياً.",
+            ];
+        }
+
+        if (filled(config('outreach.llm.gemini.api_key')) && ($reason = cache(GeminiDriver::COOLDOWN_KEY))) {
+            $banners[] = [
+                'level' => 'warning',
+                'message' => 'Gemini متوقف مؤقتاً — التحليل شغال بدون ذكاء اصطناعي. لو المشكلة في المفتاح: اعمل مفتاح جديد وحدّث GEMINI_API_KEY.',
+                'detail' => is_string($reason) ? $reason : null,
             ];
         }
 

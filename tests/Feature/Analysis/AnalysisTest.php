@@ -160,6 +160,23 @@ describe('drivers and fallback', function () {
         Http::assertSentCount(3);
     });
 
+    test('a suspended/invalid key pauses Gemini for an hour instead of failing on every company', function () {
+        Http::fake([GEMINI => Http::response(['error' => ['code' => 403, 'message' => "Permission denied: Consumer 'projects/1' has been suspended."]], 403)]);
+
+        expect(app(CompanyAnalyzer::class)->analyze(CompanyAnalysisInput::fromCompany(analyzable()))->driver)->toBe('heuristic');
+        Http::assertSentCount(1); // 403 is not retried
+
+        app(CompanyAnalyzer::class)->analyze(CompanyAnalysisInput::fromCompany(analyzable()));
+        app(CompanyAnalyzer::class)->analyze(CompanyAnalysisInput::fromCompany(analyzable()));
+        Http::assertSentCount(1); // paused: no more calls
+
+        expect(cache(GeminiDriver::COOLDOWN_KEY))->toContain('suspended');
+
+        $this->actingAs(\App\Models\User::factory()->create())
+            ->get('/')
+            ->assertInertia(fn ($page) => $page->where('banners', fn ($b) => collect($b)->contains(fn ($x) => str_contains($x['message'], 'Gemini متوقف'))));
+    });
+
     test('drivers follow the order saved in settings', function () {
         app(SettingsRepository::class)->set(SettingKey::LlmDrivers, ['heuristic', 'gemini']);
         Http::fake();
